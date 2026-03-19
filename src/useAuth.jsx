@@ -1,10 +1,5 @@
 import { useState, useEffect, createContext, useContext } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  "https://zfxmztccpyrepbmchvig.supabase.co",
-  "sb_publishable_FOpwk8eKErGMVcDxR3nJlg__-iXm0fm"
-);
+import { supabase } from "./supabase";
 
 const AuthContext = createContext(null);
 
@@ -40,7 +35,7 @@ export function AuthProvider({ children }) {
 
   const signOut = () => supabase.auth.signOut();
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Maria";
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
   const avatarUrl = user?.user_metadata?.avatar_url || null;
 
   return (

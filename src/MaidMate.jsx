@@ -1,14 +1,9 @@
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "./supabase";
 import { useAuth } from "./useAuth";
 import Auth from "./Auth";
 import TaxPR from "./TaxPR";
 import SuppliesOrder from "./SuppliesOrder";
-
-const supabase = createClient(
-  "https://zfxmztccpyrepbmchvig.supabase.co",
-  "sb_publishable_FOpwk8eKErGMVcDxR3nJlg__-iXm0fm"
-);
 
 // ─── CALENDAR & MAPS UTILS ────────────────────────────────────────────────────
 const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -92,7 +87,7 @@ const T = {
     clients: { clients:"Clients", addClient:"+ Add Client", addNew:"Add New Client", name:"Name", address:"Address", phone:"Phone", rate:"Rate ($)", freq:"Frequency", notes:"Notes", notesPlaceholder:"Special instructions…", cancel:"Cancel", freqs:["Weekly","Bi-weekly","Monthly","One-time"] },
     invoices: { paid:"Paid", pending:"Pending", overdue:"Overdue", allInvoices:"All Invoices", newInvoice:"+ New Invoice", invoice:"Invoice #", client:"Client", date:"Date", amount:"Amount", status:"Status", markPaid:"Mark Paid", clientName:"Client Name", cancel:"Cancel", create:"Create Invoice" },
     supplies: { inventory:"Supply Inventory", needsRestock:"items need restocking", allSupplies:"All Supplies", shoppingList:"🛒 Order Now", toRestock:"Items to restock:", outOfStock:"🚨 Out of stock", runningLow:"⚠️ Running low", gotIt:"✓ Got it", allStocked:"✅ All stocked up!", ok:"OK", low:"Low", out:"Out" },
-    mileage: { title:"Mileage & Expenses", logTrip:"+ Log Trip", totalMiles:"Total Miles", taxDeduction:"Tax Deduction", irsRate:"@ $0.67/mile IRS rate", tripLog:"Trip Log", from:"From", to:"To (Client)", miles:"Miles", cancel:"Cancel", log:"Log Trip", deduct:"deduct.", openMaps:"🗺️ Navigate" },
+    mileage: { title:"Mileage & Expenses", logTrip:"+ Log Trip", totalMiles:"Total Miles", taxDeduction:"Tax Deduction", irsRate:"@ $0.70/mile IRS rate", tripLog:"Trip Log", from:"From", to:"To (Client)", miles:"Miles", cancel:"Cancel", log:"Log Trip", deduct:"deduct.", openMaps:"🗺️ Navigate" },
     messages: { messages:"Messages", active:"Active now", send:"Send", placeholder:"Type a message…" },
     status: { completed:"Completed", inProgress:"In Progress", upcoming:"Upcoming" },
     common: { cancel:"Cancel", add:"Add", signOut:"Sign Out" },
@@ -107,7 +102,7 @@ const T = {
     clients: { clients:"Clientes", addClient:"+ Agregar", addNew:"Nuevo Cliente", name:"Nombre", address:"Dirección", phone:"Teléfono", rate:"Tarifa ($)", freq:"Frecuencia", notes:"Notas", notesPlaceholder:"Instrucciones…", cancel:"Cancelar", freqs:["Semanal","Quincenal","Mensual","Una vez"] },
     invoices: { paid:"Pagado", pending:"Pendiente", overdue:"Vencido", allInvoices:"Facturas", newInvoice:"+ Nueva", invoice:"#", client:"Cliente", date:"Fecha", amount:"Monto", status:"Estado", markPaid:"Marcar Pagado", clientName:"Cliente", cancel:"Cancelar", create:"Crear Factura" },
     supplies: { inventory:"Inventario", needsRestock:"artículos bajos", allSupplies:"Suministros", shoppingList:"🛒 Ordenar", toRestock:"Reponer:", outOfStock:"🚨 Sin stock", runningLow:"⚠️ Bajo", gotIt:"✓ Listo", allStocked:"✅ ¡Todo abastecido!", ok:"OK", low:"Bajo", out:"Agotado" },
-    mileage: { title:"Millaje y Gastos", logTrip:"+ Registrar", totalMiles:"Millas Totales", taxDeduction:"Deducción Fiscal", irsRate:"@ $0.67/milla IRS", tripLog:"Registro", from:"Desde", to:"Hasta", miles:"Millas", cancel:"Cancelar", log:"Registrar", deduct:"deducible", openMaps:"🗺️ Navegar" },
+    mileage: { title:"Millaje y Gastos", logTrip:"+ Registrar", totalMiles:"Millas Totales", taxDeduction:"Deducción Fiscal", irsRate:"@ $0.70/milla IRS", tripLog:"Registro", from:"Desde", to:"Hasta", miles:"Millas", cancel:"Cancelar", log:"Registrar", deduct:"deducible", openMaps:"🗺️ Navegar" },
     messages: { messages:"Mensajes", active:"Activo ahora", send:"Enviar", placeholder:"Escribe un mensaje…" },
     status: { completed:"Completado", inProgress:"En Progreso", upcoming:"Próximo" },
     common: { cancel:"Cancelar", add:"Agregar", signOut:"Cerrar Sesión" },
@@ -329,50 +324,14 @@ const styles = `
   .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
 `;
 
-// ─── DEFAULT DATA ─────────────────────────────────────────────────────────────
-const defaultClients = [
-  {id:"c1",name:"Sarah Johnson",address:"123 Maple St",phone:"(555) 234-5678",freq:"Weekly",rate:120,notes:"No bleach. Has 2 cats.",emoji:"🏡",color:"#e8f5ed",tags:["Weekly"]},
-  {id:"c2",name:"The Garcias",address:"78 Oak Blvd",phone:"(555) 456-7890",freq:"Weekly",rate:150,notes:"Deep clean kitchen.",emoji:"🏘️",color:"#fff3e8",tags:["Weekly"]},
-  {id:"c3",name:"Mike & Trish Davis",address:"45 Elm Ave",phone:"(555) 345-6789",freq:"Bi-weekly",rate:180,notes:"Eco-friendly products.",emoji:"🏠",color:"#e8f0fb",tags:["Bi-weekly"]},
-  {id:"c4",name:"Dr. Patel",address:"200 Pine Dr",phone:"(555) 567-8901",freq:"Monthly",rate:220,notes:"Strict about windows.",emoji:"🏢",color:"#fde8f0",tags:["Monthly"]},
-];
-const defaultJobs = [
-  {id:"j1",client:"Sarah Johnson",address:"123 Maple St",time:"8:00 AM",duration:"2h",status:"Completed",color:"#4a7060"},
-  {id:"j2",client:"The Garcias",address:"78 Oak Blvd",time:"11:00 AM",duration:"3h",status:"In Progress",color:"#c9a84c"},
-  {id:"j3",client:"Mike & Trish Davis",address:"45 Elm Ave",time:"2:30 PM",duration:"2.5h",status:"Upcoming",color:"#3b5bdb"},
-  {id:"j4",client:"Dr. Patel",address:"200 Pine Dr",time:"5:00 PM",duration:"3h",status:"Upcoming",color:"#3b5bdb"},
-];
-const defaultInvoices = [
-  {id:"INV-042",client:"Sarah Johnson",date:"Mar 18",amount:120,status:"Paid"},
-  {id:"INV-043",client:"The Garcias",date:"Mar 18",amount:150,status:"Paid"},
-  {id:"INV-044",client:"Mike & Trish Davis",date:"Mar 15",amount:180,status:"Pending"},
-  {id:"INV-045",client:"Dr. Patel",date:"Mar 10",amount:220,status:"Overdue"},
-];
-const defaultSupplies = [
-  {id:"s1",icon:"🧴",name:"All-Purpose Cleaner",qty:"2 bottles",level:0.7,status:"ok"},
-  {id:"s2",icon:"🧻",name:"Paper Towels",qty:"1 roll",level:0.15,status:"critical"},
-  {id:"s3",icon:"🧹",name:"Microfiber Cloths",qty:"4 cloths",level:0.5,status:"ok"},
-  {id:"s4",icon:"🫧",name:"Dish Soap",qty:"Half bottle",level:0.4,status:"low"},
-  {id:"s5",icon:"🪣",name:"Mop Pads",qty:"2 pads",level:0.3,status:"low"},
-  {id:"s6",icon:"✨",name:"Glass Cleaner",qty:"1 bottle",level:0.6,status:"ok"},
-  {id:"s7",icon:"🧽",name:"Scrub Sponges",qty:"0",level:0,status:"critical"},
-];
-const defaultTrips = [
-  {id:"t1",date:"Mar 19",from:"Home",to:"Sarah Johnson",client:"Sarah Johnson",miles:4.2,deduction:2.52},
-  {id:"t2",date:"Mar 19",from:"Sarah Johnson",to:"The Garcias",client:"The Garcias",miles:6.8,deduction:4.08},
-  {id:"t3",date:"Mar 18",from:"Home",to:"Dr. Patel",client:"Dr. Patel",miles:8.5,deduction:5.10},
-];
-const defaultRooms = [
-  {id:"r1",name:"Kitchen",icon:"🍳",tasks:[{id:1,label:"Wipe countertops",done:true},{id:2,label:"Clean stovetop",done:true},{id:3,label:"Wipe microwave",done:false},{id:4,label:"Clean sink",done:false},{id:5,label:"Mop floor",done:false}]},
-  {id:"r2",name:"Living Room",icon:"🛋️",tasks:[{id:1,label:"Dust surfaces",done:true},{id:2,label:"Vacuum sofa",done:false},{id:3,label:"Clean glass",done:false},{id:4,label:"Vacuum floor",done:false}]},
-  {id:"r3",name:"Bathrooms",icon:"🚿",tasks:[{id:1,label:"Scrub toilet",done:false},{id:2,label:"Clean sink & mirror",done:false},{id:3,label:"Scrub shower",done:false},{id:4,label:"Mop floor",done:false}]},
-  {id:"r4",name:"Bedrooms",icon:"🛏️",tasks:[{id:1,label:"Make beds",done:false},{id:2,label:"Dust furniture",done:false},{id:3,label:"Vacuum floor",done:false}]},
-];
-const defaultMessages = [
-  {id:"m1",client:"Sarah Johnson",emoji:"👩",unread:true,messages:[{sent:false,text:"Hi! Confirming tomorrow 8AM 😊",time:"9:02 AM"},{sent:true,text:"Yes, I'll be there sharp!",time:"9:15 AM"}]},
-  {id:"m2",client:"The Garcias",emoji:"👨‍👩‍👧",unread:false,messages:[{sent:false,text:"Can you deep clean the oven?",time:"Yesterday"},{sent:true,text:"Absolutely, will do!",time:"Yesterday"}]},
-  {id:"m3",client:"Dr. Patel",emoji:"👨‍⚕️",unread:true,messages:[{sent:false,text:"Can we reschedule to Friday?",time:"Mar 17"},{sent:true,text:"Let me check and get back to you!",time:"Mar 17"}]},
-];
+// ─── DEFAULT DATA (empty — real data loaded from Supabase) ────────────────────
+const defaultClients = [];
+const defaultJobs = [];
+const defaultInvoices = [];
+const defaultSupplies = [];
+const defaultTrips = [];
+const defaultRooms = [];
+const defaultMessages = [];
 
 function usePersisted(key, def) {
   const [s, setS] = useState(() => { try { const v=localStorage.getItem(key); return v?JSON.parse(v):def; } catch { return def; } });
@@ -400,7 +359,11 @@ const mobileNavItems = [
   {id:"messages",icon:"💬",label:"Messages"},
 ];
 
+// IRS standard mileage rate (2025)
+const IRS_MILEAGE_RATE = 0.70;
+
 const today = new Date();
+const fmtShortDate = () => today.toLocaleDateString("en-US",{month:"short",day:"numeric"});
 const fmtDate = (d,l) => d.toLocaleDateString(l==="es"?"es-ES":"en-US",{weekday:"short",month:"short",day:"numeric"});
 const sc = s => s==="Completed"?"green":s==="In Progress"?"orange":"blue";
 const sk = s => s==="Completed"?"completed":s==="In Progress"?"inProgress":"upcoming";
@@ -414,10 +377,10 @@ function Dashboard({jobs,invoices,trips,supplies,t,setPage}) {
   return (
     <div>
       <div className="stats-grid">
-        <div className="stat-card" data-icon="💰"><div className="stat-label">{t.dashboard.earned}</div><div className="stat-value">${earned}</div><div className="stat-sub">↑ 12%</div></div>
+        <div className="stat-card" data-icon="💰"><div className="stat-label">{t.dashboard.earned}</div><div className="stat-value">${earned}</div><div className="stat-sub">{invoices.filter(i=>i.status==="Paid").length} {t.dashboard.invoices}</div></div>
         <div className="stat-card" data-icon="⏳"><div className="stat-label">{t.dashboard.pending}</div><div className="stat-value">${pending}</div><div className="stat-sub">{invoices.filter(i=>i.status!=="Paid").length} {t.dashboard.invoices}</div></div>
-        <div className="stat-card" data-icon="🏠"><div className="stat-label">{t.dashboard.todayJobs}</div><div className="stat-value">{jobs.length}</div><div className="stat-sub">{t.dashboard.next}: {jobs[1]?.time}</div></div>
-        <div className="stat-card" data-icon="🚗"><div className="stat-label">{t.dashboard.miles}</div><div className="stat-value">{totalMiles.toFixed(1)}</div><div className="stat-sub">${(totalMiles*0.67).toFixed(2)} {t.dashboard.deductible}</div></div>
+        <div className="stat-card" data-icon="🏠"><div className="stat-label">{t.dashboard.todayJobs}</div><div className="stat-value">{jobs.length}</div><div className="stat-sub">{t.dashboard.next}: {jobs[1]?.time || "—"}</div></div>
+        <div className="stat-card" data-icon="🚗"><div className="stat-label">{t.dashboard.miles}</div><div className="stat-value">{totalMiles.toFixed(1)}</div><div className="stat-sub">${(totalMiles*IRS_MILEAGE_RATE).toFixed(2)} {t.dashboard.deductible}</div></div>
       </div>
       <div className="grid-2">
         <div className="card">
@@ -466,13 +429,13 @@ function Schedule({jobs,setJobs,t}) {
     if(!form.client) return;
     const j={id:Date.now().toString(),...form,status:"Upcoming",color:"#3b5bdb"};
     setJobs([...jobs,j]);
-    try{await supabase.from("jobs").insert([{client:j.client,address:j.address,time:j.time,duration:j.duration,status:"Upcoming",color:"#3b5bdb"}]);}catch{}
+    try{await supabase.from("jobs").insert([{client:j.client,address:j.address,time:j.time,duration:j.duration,status:"Upcoming",color:"#3b5bdb"}]);}catch(e){console.error("Failed to save job:",e);}
     setForm({client:"",address:"",time:"",duration:""});setShow(false);
   };
   const upd = async(id,status)=>{
     const c=status==="Completed"?"#4a7060":status==="In Progress"?"#c9a84c":"#3b5bdb";
     setJobs(jobs.map(j=>j.id===id?{...j,status,color:c}:j));
-    try{await supabase.from("jobs").update({status,color:c}).eq("id",id);}catch{}
+    try{await supabase.from("jobs").update({status,color:c}).eq("id",id);}catch(e){console.error("Failed to update job:",e);}
   };
   return (
     <div>
@@ -562,7 +525,7 @@ function Clients({clients,setClients,t}) {
     const idx=clients.length%5;
     const c={id:Date.now().toString(),...form,rate:Number(form.rate),emoji:emojis[idx],color:colors[idx],tags:[form.freq]};
     setClients([...clients,c]);
-    try{await supabase.from("clients").insert([{name:c.name,address:c.address,phone:c.phone,freq:c.freq,rate:c.rate,notes:c.notes,emoji:c.emoji,color:c.color,tags:c.tags}]);}catch{}
+    try{await supabase.from("clients").insert([{name:c.name,address:c.address,phone:c.phone,freq:c.freq,rate:c.rate,notes:c.notes,emoji:c.emoji,color:c.color,tags:c.tags}]);}catch(e){console.error("Failed to save client:",e);}
     setForm({name:"",address:"",phone:"",freq:t.clients.freqs[0],rate:"",notes:""});setShow(false);
   };
   return (
@@ -619,14 +582,14 @@ function Invoices({invoices,setInvoices,t}) {
   const over=invoices.filter(i=>i.status==="Overdue").reduce((s,i)=>s+i.amount,0);
   const add=async()=>{
     if(!form.client||!form.amount) return;
-    const inv={id:`INV-${String(invoices.length+46).padStart(3,"0")}`,client:form.client,date:form.date||"Mar 19",amount:Number(form.amount),status:"Pending"};
+    const inv={id:`INV-${Date.now().toString(36).toUpperCase()}`,client:form.client,date:form.date||fmtShortDate(),amount:Number(form.amount),status:"Pending"};
     setInvoices([inv,...invoices]);
-    try{await supabase.from("invoices").insert([inv]);}catch{}
+    try{await supabase.from("invoices").insert([inv]);}catch(e){console.error("Failed to save invoice:",e);}
     setForm({client:"",amount:"",date:""});setShow(false);
   };
   const markPaid=async(id)=>{
     setInvoices(invoices.map(i=>i.id===id?{...i,status:"Paid"}:i));
-    try{await supabase.from("invoices").update({status:"Paid"}).eq("id",id);}catch{}
+    try{await supabase.from("invoices").update({status:"Paid"}).eq("id",id);}catch(e){console.error("Failed to update invoice:",e);}
   };
   const bc=s=>s==="Paid"?"badge-green":s==="Pending"?"badge-blue":"badge-red";
   const sl=s=>t.invoices[s==="Paid"?"paid":s==="Pending"?"pending":"overdue"];
@@ -681,7 +644,7 @@ function Supplies({supplies,setSupplies,t,setPage}) {
   const sl=s=>t.supplies[s==="ok"?"ok":s==="low"?"low":"out"];
   const restock=async(id)=>{
     setSupplies(supplies.map(s=>s.id===id?{...s,level:1,status:"ok",qty:"Full stock"}:s));
-    try{await supabase.from("supplies").update({level:1,status:"ok",qty:"Full stock"}).eq("id",id);}catch{}
+    try{await supabase.from("supplies").update({level:1,status:"ok",qty:"Full stock"}).eq("id",id);}catch(e){console.error("Failed to update supply:",e);}
   };
   return (
     <div>
@@ -727,9 +690,9 @@ function Mileage({trips,setTrips,t}) {
   const add=async()=>{
     if(!form.from||!form.miles) return;
     const m=Number(form.miles);
-    const trip={id:Date.now().toString(),date:"Mar 19",from:form.from,to:form.to,client:form.to,miles:m,deduction:+(m*0.67).toFixed(2)};
+    const trip={id:Date.now().toString(),date:fmtShortDate(),from:form.from,to:form.to,client:form.to,miles:m,deduction:+(m*IRS_MILEAGE_RATE).toFixed(2)};
     setTrips([trip,...trips]);
-    try{await supabase.from("trips").insert([{from_location:form.from,to_location:form.to,client:form.to,miles:m,deduction:trip.deduction}]);}catch{}
+    try{await supabase.from("trips").insert([{from_location:form.from,to_location:form.to,client:form.to,miles:m,deduction:trip.deduction}]);}catch(e){console.error("Failed to save trip:",e);}
     setForm({from:"",to:"",miles:""});setShow(false);
   };
   return (
@@ -846,9 +809,31 @@ export default function MaidMate() {
   const [dbOnline,setDbOnline] = useState(false);
   const [drawerOpen,setDrawer] = useState(false);
 
+  // Load data from Supabase when user is authenticated
   useEffect(()=>{
-    supabase.from("clients").select("id").limit(1).then(({error})=>{ if(!error) setDbOnline(true); });
-  },[]);
+    if (!user) return;
+    const loadTable = async (table, setter) => {
+      try {
+        const { data, error } = await supabase
+          .from(table)
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data && data.length > 0) {
+          setter(data);
+        }
+        if (!error) setDbOnline(true);
+      } catch (e) {
+        console.error(`Failed to load ${table}:`, e);
+      }
+    };
+    loadTable("clients", setClients);
+    loadTable("jobs", setJobs);
+    loadTable("invoices", setInvoices);
+    loadTable("supplies", setSupplies);
+    loadTable("trips", setTrips);
+    loadTable("rooms", setRooms);
+    loadTable("conversations", setMessages);
+  },[user]);
 
   if (loading) return (
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#f5f2ee",fontFamily:"DM Sans,sans-serif",color:"#888",gap:10}}>
@@ -919,7 +904,7 @@ export default function MaidMate() {
           <div className="sidebar-footer">
             <div className="user-badge">
               <div className="avatar">
-                {avatarUrl ? <img src={avatarUrl} alt="avatar" /> : "👩"}
+                {avatarUrl ? <img src={avatarUrl} alt="avatar" /> : (displayName?.charAt(0)?.toUpperCase() || "U")}
               </div>
               <div>
                 <div className="user-name">{displayName}</div>

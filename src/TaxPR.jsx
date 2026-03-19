@@ -116,6 +116,7 @@ export default function TaxPR({ invoices = [], trips = [], supplies = [], lang =
   const [homeOffice, setHomeOffice] = useState(0);
   const [healthInsurance, setHealthInsurance] = useState(0);
   const [dependents, setDependents] = useState(0);
+  const [suppliesExpense, setSuppliesExpense] = useState(0);
 
   // ─── AUTO-PULL FROM APP DATA ──────────────────────────────────────────────
   const grossIncome = invoices
@@ -124,9 +125,7 @@ export default function TaxPR({ invoices = [], trips = [], supplies = [], lang =
 
   const mileageDeduction = trips.reduce((s, t) => s + t.deduction, 0);
 
-  const suppliesDeduction = supplies
-    .filter(s => s.status !== "ok")
-    .length * 15; // Estimated avg supply cost for deduction
+  const suppliesDeduction = Number(suppliesExpense);
 
   const totalDeductions =
     mileageDeduction +
@@ -256,7 +255,7 @@ export default function TaxPR({ invoices = [], trips = [], supplies = [], lang =
               <span className="deduction-pill">📋 {invoices.filter(i=>i.status==="Paid").length} paid invoices</span>
             </div>
           </div>
-          <div style={{display:"flex",gap:16"}}>
+          <div style={{display:"flex",gap:16}}>
             <div className="tax-hero-badge">
               <div className="amount">{fmt(estimatedTax)}</div>
               <div className="label">{tx.estTax}</div>
@@ -308,12 +307,12 @@ export default function TaxPR({ invoices = [], trips = [], supplies = [], lang =
               <div className="tax-section">
                 <div className="tax-section-title">📉 {tx.deductions}</div>
                 <div className="tax-input-row">
-                  <div><div className="tax-input-label">{tx.mileage}</div><div className="tax-input-sub">{trips.length} trips @ $0.67/mi</div></div>
+                  <div><div className="tax-input-label">{tx.mileage}</div><div className="tax-input-sub">{trips.length} trips @ $0.70/mi</div></div>
                   <div style={{fontSize:14,fontWeight:600,color:"#2d7a4f"}}>{fmt(mileageDeduction)}</div>
                 </div>
                 <div className="tax-input-row">
                   <div><div className="tax-input-label">{tx.supplies}</div><div className="tax-input-sub">Business supplies purchased</div></div>
-                  <div style={{fontSize:14,fontWeight:600,color:"#2d7a4f"}}>{fmt(suppliesDeduction)}</div>
+                  <input type="number" className="tax-number-input" value={suppliesExpense} onChange={e=>setSuppliesExpense(e.target.value)} placeholder="0" />
                 </div>
                 <div className="tax-input-row">
                   <div><div className="tax-input-label">{tx.homeOffice}</div><div className="tax-input-sub">Portion of home used for work</div></div>

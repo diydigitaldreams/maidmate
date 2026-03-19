@@ -1,6 +1,6 @@
-// SuppliesOrder.jsx - Smart supply ordering with Amazon affiliate links
+// SuppliesOrder.jsx - Smart supply ordering with Amazon affiliate links and Walmart deep links
 // Associate Tag: maidmate-20
-// Walmart: deep links (API keys to be added later)
+// Note: Product prices are reference values and may not reflect current pricing
 
 import { useState } from "react";
 
@@ -246,9 +246,9 @@ export default function SuppliesOrder({ supplies = [], lang = "en" }) {
             <div className="account-icon">🔵</div>
             <div className="account-info">
               <div className="account-name">Walmart</div>
-              <div className="account-detail">API integration — paste keys when ready</div>
+              <div className="account-detail">Deep links to Walmart products</div>
             </div>
-            <span className="account-status status-pending">⏳ Pending API</span>
+            <span className="account-status status-connected">✓ Active</span>
           </div>
         </div>
 
