@@ -486,7 +486,7 @@ function Schedule({jobs,setJobs,t}) {
 function Checklist({rooms,setRooms,t}) {
   const [active,setActive] = useState(null);
   const toggle=(rid,tid)=>setRooms(rooms.map(r=>r.id===rid?{...r,tasks:r.tasks.map(tk=>tk.id===tid?{...tk,done:!tk.done}:tk)}:r));
-  const pct=r=>Math.round((r.tasks.filter(x=>x.done).length/r.tasks.length)*100);
+  const pct=r=>r.tasks.length?Math.round((r.tasks.filter(x=>x.done).length/r.tasks.length)*100):0;
   return (
     <div>
       <div className="section-header">
@@ -751,10 +751,19 @@ function Messages({messages,setMessages,t}) {
   const [input,setInput] = useState("");
   const convo=messages[active];
   const send=()=>{
-    if(!input.trim()) return;
+    if(!input.trim()||!convo) return;
     setMessages(messages.map((m,i)=>i===active?{...m,messages:[...m.messages,{sent:true,text:input,time:"Now"}],unread:false}:m));
     setInput("");
   };
+  if (!messages.length) {
+    return (
+      <div className="card" style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>
+        <div style={{fontSize:40,marginBottom:12}}>💬</div>
+        <div style={{fontSize:15,fontWeight:600,color:"var(--text)",marginBottom:4}}>{t.messages.messages}</div>
+        <div style={{fontSize:13}}>No conversations yet. Messages from clients will appear here.</div>
+      </div>
+    );
+  }
   return (
     <div className="messages-layout">
       <div className="convo-list-panel">
